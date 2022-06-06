@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      1.0.1
+// @version      1.0.2
 // @description  抓取数据!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
