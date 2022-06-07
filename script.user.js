@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      2.0
+// @version      2.0.1
 // @description  抓取数据!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -381,7 +381,7 @@
                 //获取推广计划
                 if(statusGroups.length>0){
                     $.each(statusGroups, function (launchn, launchd) {
-                        if(launchd.status!=0&&launchd.status!=5){
+                        if(launchd.status!=0&&launchd.status!=5&&launchd.status!=6){
                             $.each(launchd.launches, function (launchn1, launchd1) {
                                 launches.push(launchd1)
                             })
