@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      2.0.1
+// @version      2.0.3
 // @description  抓取数据!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -444,18 +444,18 @@
                 var ncpmDetail = {}
 
                 var poiId = shopId2PoiIdMap.get(shopid)
-                ncpmDetail.title=ld.title
-                ncpmDetail.poiId=poiId
-                ncpmDetail.cost=ncpm.ncpmCost
-                ncpmDetail.viewUv=ncpm.ncpmViewUv
-                ncpmDetail.clickNum=ncpm.ncpmClickNum
-                ncpmDetail.clickAvgCost=ncpm.ncpmClickAvgCost
-                ncpmDetail.orderNum=0
-                ncpmDetail.collectionNum=0
-                ncpmDetail.interestedNum=0
-                ncpmDetail.type = 2
-                console.log('ncpmDetail明细',ncpmDetail)
-                ncpmMapDetail.push(ncpmDetail)
+//                 ncpmDetail.title=ld.title
+//                 ncpmDetail.poiId=poiId
+//                 ncpmDetail.cost=ncpm.ncpmCost
+//                 ncpmDetail.viewUv=ncpm.ncpmViewUv
+//                 ncpmDetail.clickNum=ncpm.ncpmClickNum
+//                 ncpmDetail.clickAvgCost=ncpm.ncpmClickAvgCost
+//                 ncpmDetail.orderNum=0
+//                 ncpmDetail.collectionNum=0
+//                 ncpmDetail.interestedNum=0
+//                 ncpmDetail.type = 2
+//                 console.log('ncpmDetail明细',ncpmDetail)
+//                 ncpmMapDetail.push(ncpmDetail)
                 // var nctmp=ncpmMap.get(shopid)
                 var nctmp=ncpmMap.get(poiId)
                 if(nctmp!=null){
@@ -542,10 +542,8 @@
                             rt.shopPhotoClick=0
                         }
                     })
-                    succ('获取推广计划明细数据')
-                    //获取推广计划明细数据
-                    console.log('ncpmMapDetail',ncpmMapDetail)
-                    getTableReportData()
+                    succ('保存数据')
+                    saveData()
                 }
             },
             onerror:function(obj,status,msg){
@@ -594,10 +592,10 @@
     //保存最终数据
     function saveData(){
         GM_xmlhttpRequest({
-            url:mainUrl+'ecome/v1/reports',
+            url:mainUrl+'ecome/reports',
             method :"post",
             name:accountInfo.accountName+'.xlsx',
-            data: JSON.stringify({'reportList':result,'ncpmList':ncpmMapDetail,'extensionList':tableReportDetail}),
+            data: JSON.stringify(result),
             headers:{
                 'Content-Type': 'application/json'
             },
