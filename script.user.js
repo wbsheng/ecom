@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      2.0.3
+// @version      3.0.0
 // @description  抓取数据!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -93,6 +93,15 @@
     function getEndTime(){
         return new Date(getYesterday()+' 23:59:59').getTime();
     }
+
+    function guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     //开始时间，结束时间
     var startTime=getStartTime();
     var endTime=getEndTime();
@@ -107,7 +116,7 @@
     var flowMap=new Map();
     //智选展位数据
     var ncpmMap=new Map();
-    var ncpmMapDetail=[];
+
     //代金券核销
     var shopCashCouponNumMap=new Map()
     //最后结果
@@ -119,7 +128,7 @@
     var shopId2PoiIdMap=new Map()
     var poiName2IdMap=new Map()
     var boardReportMap=new Map()
-    var tableReportDetail=[]
+
     //店铺对应计划
     var launches=[]
     var launchesCount=0
@@ -128,8 +137,22 @@
     var shopPhotoClickMap=new Map()
 
     var moreDataCount=0
-
+    //周报参数
     var clickNum=-1
+    var startWeekDate=''
+    var endWeekDate=''
+    var bstartWeekDate=''
+    var bendWeekDate=''
+    var poiName2PoiIdMap = new Map()
+    var weekshopId2PoiIdMap = new Map()
+    var weekAccount=''
+    var pcNo=''
+    var weeklaunches = []
+    var weeklaunchesCount =0
+    var tableReportDetail=[]
+    var ncpmMapDetail=[];
+
+    var isOpenTab=0
 
     function getBaseData(){
         succ('开始爬取-自然流量：曝光、访问人数')
@@ -444,18 +467,18 @@
                 var ncpmDetail = {}
 
                 var poiId = shopId2PoiIdMap.get(shopid)
-//                 ncpmDetail.title=ld.title
-//                 ncpmDetail.poiId=poiId
-//                 ncpmDetail.cost=ncpm.ncpmCost
-//                 ncpmDetail.viewUv=ncpm.ncpmViewUv
-//                 ncpmDetail.clickNum=ncpm.ncpmClickNum
-//                 ncpmDetail.clickAvgCost=ncpm.ncpmClickAvgCost
-//                 ncpmDetail.orderNum=0
-//                 ncpmDetail.collectionNum=0
-//                 ncpmDetail.interestedNum=0
-//                 ncpmDetail.type = 2
-//                 console.log('ncpmDetail明细',ncpmDetail)
-//                 ncpmMapDetail.push(ncpmDetail)
+                //                 ncpmDetail.title=ld.title
+                //                 ncpmDetail.poiId=poiId
+                //                 ncpmDetail.cost=ncpm.ncpmCost
+                //                 ncpmDetail.viewUv=ncpm.ncpmViewUv
+                //                 ncpmDetail.clickNum=ncpm.ncpmClickNum
+                //                 ncpmDetail.clickAvgCost=ncpm.ncpmClickAvgCost
+                //                 ncpmDetail.orderNum=0
+                //                 ncpmDetail.collectionNum=0
+                //                 ncpmDetail.interestedNum=0
+                //                 ncpmDetail.type = 2
+                //                 console.log('ncpmDetail明细',ncpmDetail)
+                //                 ncpmMapDetail.push(ncpmDetail)
                 // var nctmp=ncpmMap.get(shopid)
                 var nctmp=ncpmMap.get(poiId)
                 if(nctmp!=null){
@@ -555,46 +578,13 @@
         })
     }
 
-    //获取推广计划明细数据
-    function getTableReportData(){
-        GM_xmlhttpRequest({
-            url:getTableReportUrl+'?groupUnit=launchId&tabIds=T30001%2CT30002%2CT30003%2CT30004%2CT30012%2CT30026%2CT30020&shopIds=0&launchIds=0&objectUnit=account&timeUnit=day&beginDate='+getYesterday()+'&endDate='+getYesterday()+'&platform=0',
-            method :"get",
-            onload:function(xhr){
-                var data=$.parseJSON( xhr.responseText )
-                data.msg.data.forEach(rd=>{
-                    var tDetail = {}
-                    tDetail.title=rd.launchName
-                    tDetail.poiId=poiName2IdMap.get(rd.shopName)
-                    tDetail.cost=rd.T30001
-                    tDetail.viewUv=rd.T30002
-                    tDetail.clickNum=rd.T30003
-                    tDetail.clickAvgCost=rd.T30004
-                    tDetail.orderNum=rd.T30020
-                    tDetail.collectionNum=rd.T30012
-                    tDetail.interestedNum=rd.T30026
-                    tDetail.type = 1
-                    tableReportDetail.push(tDetail)
-                })
-                console.log('tableReportDetail',tableReportDetail)
-                succ('保存数据')
-                saveData()
-            },
-            onerror:function(obj,status,msg){
-                console.log('obj',obj,'status',status,'msg',msg)
-                warning('获取推广计划明细失败')
-                succ('重新获取推广计划明细')
-                getTableReportData()
-            }
-        })
-    }
+
 
     //保存最终数据
     function saveData(){
         GM_xmlhttpRequest({
             url:mainUrl+'ecome/reports',
             method :"post",
-            name:accountInfo.accountName+'.xlsx',
             data: JSON.stringify(result),
             headers:{
                 'Content-Type': 'application/json'
@@ -615,6 +605,251 @@
             }
         })
     }
+    // =========周报开始
+    //获取推广计划明细数据
+    function getTableReportData(xh,st,et){
+        GM_xmlhttpRequest({
+            url:getTableReportUrl+'?groupUnit=launchId&tabIds=T30001%2CT30002%2CT30003%2CT30004%2CT30012%2CT30026%2CT30020&shopIds=0&launchIds=0&objectUnit=account&timeUnit=day&beginDate='+st+'&endDate='+et+'&platform=0',
+            method :"get",
+            onload:function(xhr){
+                var data=$.parseJSON( xhr.responseText )
+                console.log('获取'+(xh==1?'本周':'上周')+'推广通消耗明细数据',data)
+                var tdata=data.msg.data
+                var size=tdata.length
+                for(var i=0;i<size;i++){
+                    var rd=tdata[i]
+                    var tDetail = {}
+                    tDetail.title=rd.launchName
+                    tDetail.poiId=poiName2PoiIdMap.get(rd.shopName)
+                    tDetail.cost=rd.T30001
+                    tDetail.viewUv=rd.T30002
+                    tDetail.clickNum=rd.T30003
+                    tDetail.clickAvgCost=rd.T30004
+                    tDetail.orderNum=rd.T30020
+                    tDetail.collectionNum=rd.T30012
+                    tDetail.interestedNum=rd.T30026
+                    tDetail.dt = rd.date
+                    tDetail.type = 1
+                    tDetail.sortNo=i
+                    tDetail.bData=xh
+                    tDetail.pcNo=pcNo
+                    tDetail.beforeData = xh
+                    tableReportDetail.push(tDetail)
+                }
+                if(xh==1){
+                    getTableReportData(0,bstartWeekDate,bendWeekDate)
+                }else{
+                    succ('开始抓取NCPM数据')
+                    weekHaveNcpm()
+                }
+            },
+            onerror:function(obj,status,msg){
+                //console.log('obj',obj,'status',status,'msg',msg)
+                warning('获取本周推广通消耗数据失败')
+                succ('重新获取本周推广通消耗数据')
+                getTableReportData(xh,st,et)
+            }
+        })
+    }
+
+    //判断是否有智选展位菜单
+    function weekHaveNcpm(){
+        GM_xmlhttpRequest({
+            url:queryMenuListUrl,
+            method :"get",
+            onload:function(xhr){
+                var data=$.parseJSON( xhr.responseText )
+                var havaMenu=false
+                $.each(data.msg.menuList, function (menu1, menud) {
+                    if(menud.title=='智选展位'){
+                        havaMenu=true
+                    }
+                })
+                if(havaMenu){
+                    succ('拥有智选展位菜单')
+                    //console.log('拥有智选展位菜单')
+                    succ('获取推广计划')
+                    weekGetLaunches()
+                }else{
+                    //console.log('没有智选展位菜单')
+                    warning('没有智选展位菜单')
+                    //没有智选展位，智选其他的
+                    //console.log('开始整合数据')
+                    succ('开始整合数据')
+                    saveWeekReportData()
+                }
+            },
+            onerror:function(obj,status,msg){
+                //console.log('obj',obj,'status',status,'msg',msg)
+                warning('判断是否有智选展位失败')
+                succ('重新爬取判断是否有智选展位')
+                weekHaveNcpm()
+            }
+        })
+    }
+    //获取推广计划
+    function weekGetLaunches(){
+        var statusGroups=[];
+        //获取推广计划
+        GM_xmlhttpRequest({
+            url:getLaunchListUrl+'?_='+getNowTime(),
+            method :"get",
+            onload:function(xhr){
+                var data=$.parseJSON( xhr.responseText )
+                statusGroups=data.msg.statusGroups
+                //获取推广计划
+                if(statusGroups.length>0){
+                    $.each(statusGroups, function (launchn, launchd) {
+                        if(launchd.status!=0&&launchd.status!=5&&launchd.status!=6){
+                            $.each(launchd.launches, function (launchn1, launchd1) {
+                                weeklaunches.push(launchd1)
+                            })
+                        }
+                    })
+
+                    if(weeklaunches.length<1){
+                        //有智选展位，没有店铺开通
+                        warning('有智选展位，没有推广计划')
+                        //console.log('有智选展位，没有推广计划')
+                        succ('开始整合数据')
+                        saveWeekReportData()
+                    }else{
+                        succ('成功获取-推广计划')
+                        //console.log('推广计划数据',weeklaunches)
+                        weekgetBoardReportShopId()
+                    }
+                }else{
+                    //有智选展位，没有店铺开通
+                    warning('有智选展位，没有推广计划')
+                    //console.log('有智选展位，没有推广计划')
+                    succ('开始整合数据')
+                    saveWeekReportData()
+                }
+            },
+            onerror:function(obj,status,msg){
+                //console.log('obj',obj,'status',status,'msg',msg)
+                warning('获取推广计划失败')
+                succ('重新获取推广计划')
+                weekGetLaunches()
+            }
+        })
+    }
+
+
+    //获取店铺对应的shopId
+    function weekgetBoardReportShopId(){
+        GM_xmlhttpRequest({
+            url:launchFilterInfoUrl,
+            method :"get",
+            onload:function(xhr){
+                var data=$.parseJSON( xhr.responseText )
+                //console.log('getBoardReportShopId',data)
+                $.each(data.msg.shopList, function (shopn, shop) {
+                    weekshopId2PoiIdMap.set(shop.shopId,poiName2PoiIdMap.get(shop.shopName))
+                })
+                //console.log('结束爬取-门店对应shopId数据weekshopId2PoiIdMap',weekshopId2PoiIdMap)
+                succ('结束爬取-门店对应shopId数据')
+                succ('开始爬取-NCPM数据')
+                weekGetTable(weeklaunches[0],1,startWeekDate,endWeekDate)
+            },
+            onerror:function(obj,status,msg){
+                //console.log('obj',obj,'status',status,'msg',msg)
+                weekgetBoardReportShopId()
+            }
+        })
+    }
+
+    //ncpm获取店铺对应计划的数据
+    function weekGetTable(ld,xh,st,et){
+        var shopid=ld.shopId+''
+        console.log('开始爬取NCPM：',ld.title)
+        GM_xmlhttpRequest({
+            url:getTableUrl+'?brandId=0&planId=0&originalMaterialId=0&launchId='+ld.launchId+'&beginDate='+st+'&endDate='+et+'&tabIds=T1001%2CT1002%2CT1003%2CT1004%2CT1005%2CT1010&groupByDimension=1&period=',
+            method :"get",
+            onload:function(xhr){
+                var data=$.parseJSON( xhr.responseText )
+                console.log('weekGetTable',data)
+                //解析ncpm数据放入map
+                var tableData=data.msg.total
+                var titleData=data.msg.title
+                var mxData=data.msg.data
+                for (var i=0;i<mxData.length;i++){
+                    var ncpm= mxData[i]
+                    var ncpmDetail = {}
+                    var poiId = weekshopId2PoiIdMap.get(shopid)
+                    ncpmDetail.title='NCPM-'+ld.title
+                    ncpmDetail.poiId=poiId
+                    ncpmDetail.cost=ncpm[1]
+                    ncpmDetail.viewUv=ncpm[2]
+                    ncpmDetail.clickNum=ncpm[3]
+                    ncpmDetail.clickAvgCost=ncpm[6]
+                    ncpmDetail.orderNum=0
+                    ncpmDetail.collectionNum=0
+                    ncpmDetail.interestedNum=0
+                    ncpmDetail.type = 2
+                    ncpmDetail.dt = ncpm[0]
+                    ncpmDetail.sortNo=i
+                    ncpmDetail.pcNo=pcNo
+                    ncpmDetail.beforeData = xh
+                    // //console.log('ncpmDetail明细',ncpmDetail)
+                    if(ncpmDetail.cost>0){
+                        ncpmMapDetail.push(ncpmDetail)
+                    }
+                }
+
+                weeklaunchesCount++
+                if(weeklaunchesCount<weeklaunches.length){
+                    weekGetTable(weeklaunches[weeklaunchesCount],xh,st,et)
+                }else{
+                    if(xh==1){
+                        weeklaunchesCount=0
+                        weekGetTable(weeklaunches[0],0,bstartWeekDate,bendWeekDate)
+                    }else{
+                        succ('开始整合数据')
+                        saveWeekReportData()
+                    }
+
+                }
+            },
+            onerror:function(obj,status,msg){
+                //console.log('obj',obj,'status',status,'msg',msg)
+                warning('店铺：'+shopid+'，NCPM数据：花费、曝光、点击、点击均价')
+                succ('重新爬取-店铺：'+shopid+'，NCPM数据：花费、曝光、点击、点击均价')
+                weekGetTable(ld,xh,st,et)
+            }
+        })
+    }
+
+
+    function saveWeekReportData(){
+        //console.log('ncpmMapDetail',ncpmMapDetail)
+        //console.log('tableReportDetail',tableReportDetail)
+        //  //console.log('json',JSON.stringify({'ncpmList':ncpmMapDetail,'extensionList':tableReportDetail}))
+        GM_xmlhttpRequest({
+            url:mainUrl+'ecome/week/reports',
+            method :"post",
+            data: JSON.stringify({'ncpmList':ncpmMapDetail,'extensionList':tableReportDetail}),
+            headers:{
+                'Content-Type': 'application/json'
+            },
+            onload:function(xhr){
+                var data=$.parseJSON( xhr.responseText )
+                //console.log('保存结束',xhr.responseText)
+                succ('开始导出周报')
+                window.location.href=mainUrl+'ecome/export/week/'+weekAccount+'/'+startWeekDate.replaceAll('-','')+'/'+endWeekDate.replaceAll('-','')+'/'+pcNo
+                cloaseLoading()
+                succ('结束导出周报')
+            },
+            onerror:function(obj,status,msg){
+                //console.log('obj',obj,'status',status,'msg',msg)
+                warning('保存数据失败')
+                succ('重新保存数据')
+                saveWeekReportData()
+            }
+        })
+    }
+    //=========周报结束
+
 
     var button = document.createElement("button"); //创建一个input对象（提示框按钮）
     button.id = "id001";
@@ -661,8 +896,12 @@
         clickNum =-1
         succ('打开商品通页面')
         succ('打开推广产品页面')
-        GM_openInTab("https://ecom.meituan.com/meishi/?cate=93#https://midas.dianping.com/shopdiy/account/pcCpcEntry?continueUrl=/app/peon-merchant-product-menu/html/index.html", true)
-        GM_openInTab("https://ecom.meituan.com/meishi/?cate=93#https://biztonemeishi.meituan.com/web/index", true)
+        if(isOpenTab==0){
+            GM_openInTab("https://ecom.meituan.com/meishi/?cate=93#https://midas.dianping.com/shopdiy/account/pcCpcEntry?continueUrl=/app/peon-merchant-product-menu/html/index.html", true)
+            GM_openInTab("https://ecom.meituan.com/meishi/?cate=93#https://biztonemeishi.meituan.com/web/index", true)
+            isOpenTab=1
+        }
+
         //开始获取数据
         $.get(getAccountUrl+'?_tm='+getNowTime(),function(data){
             var account=data.user.userId
@@ -768,24 +1007,61 @@
             document.querySelector('#pickmeupdata').addEventListener('pickmeup-change', function (e) {
                 clickNum++
                 if(clickNum%2==0){
-                    console.log(e.detail.formatted_date); // New date according to current format
-                    //弹窗确认生成周报
+                    if(isOpenTab==0){
+                        GM_openInTab("https://ecom.meituan.com/meishi/?cate=93#https://midas.dianping.com/shopdiy/account/pcCpcEntry?continueUrl=/app/peon-merchant-product-menu/html/index.html", true)
+                        GM_openInTab("https://ecom.meituan.com/meishi/?cate=93#https://biztonemeishi.meituan.com/web/index", true)
+                        isOpenTab=1
+                    }
+                    loading('生成周报中...')
+                    console.log('周报范围为',e.detail.formatted_date); // New date according to current format
                     //清除选择器
+
+                    tableReportDetail=[]
+                    ncpmMapDetail= []
+                    startWeekDate=''
+                    endWeekDate=''
+                    bstartWeekDate=''
+                    bendWeekDate=''
+                    poiName2PoiIdMap = new Map()
+                    weekshopId2PoiIdMap = new Map()
+                    weekAccount=''
+                    pcNo=''
+                    weeklaunches = []
+                    weeklaunchesCount =0
                     pickmeup('#pickmeupdata').clear();
                     $('#pickmeupdata').css('display','none')
                     succ('开始导出周报')
-                    var st = e.detail.formatted_date[0]
-                    var et = e.detail.formatted_date[1]
-                    succ('时间范围为：'+st + '至' + et)
-                    if(accountInfo.account!=null){
-                        window.location.href=mainUrl+'ecome/export/week/'+accountInfo.account+'/'+st.replaceAll('-','')+'/'+et.replaceAll('-','')
-                    }else{
-                        $.get(getAccountUrl+'?_tm='+getNowTime(),function(data){
-                            var account=data.user.userId
-                            window.location.href=mainUrl+'ecome/export/week/'+account+'/'+st.replaceAll('-','')+'/'+et.replaceAll('-','')
-                        })
-                    }
+                    startWeekDate = e.detail.formatted_date[0]
+                    endWeekDate = e.detail.formatted_date[1]
+                    succ('时间范围为：'+startWeekDate + '至' + endWeekDate)
 
+                    succ('获取账号信息')
+                    $.get(getAccountUrl+'?_tm='+getNowTime(),function(data){
+                        weekAccount=data.user.userId
+                        pcNo=weekAccount+'_'+guid()
+                        succ('获取店铺信息')
+                        GM_xmlhttpRequest({
+                            url:mainUrl+'ecome/poi/'+weekAccount+'?type=all&startDay='+startWeekDate+"&endDay="+endWeekDate,
+                            method :"get",
+                            onload:function(xhr){
+                                var data=$.parseJSON( xhr.responseText )
+                                console.log('获取店铺信息',data)
+                                if(data.code!=0 || data.list.length<1){
+                                    cloaseLoading()
+                                    error( '提示','暂无店铺数据，请先上传店铺数据')
+                                    return
+                                }else{
+                                    data.list.forEach(pinfo=>{
+                                        poiName2PoiIdMap.set(pinfo.poiName.replace('（','(').replace('）',')'),pinfo.poiId)
+                                    })
+                                    bstartWeekDate= data.bstartDay
+                                    bendWeekDate= data.bendDay
+                                    succ('开始抓取推广数据')
+                                    getTableReportData(1,startWeekDate,endWeekDate)
+                                }
+                            }
+                        })
+                    })
                 }
             })
         }else{
