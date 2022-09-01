@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      3.0.0
+// @version      3.0.1
 // @description  抓取数据!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -151,28 +151,27 @@
     var weeklaunchesCount =0
     var tableReportDetail=[]
     var ncpmMapDetail=[];
-
+    var receiptDetail = []
     var isOpenTab=0
 
     function getBaseData(){
         succ('开始爬取-自然流量：曝光、访问人数')
-        succ('开始爬取-自然流量：订单核销，门店统计：代金券核销')
+
         $.when(
             //r-start
             //自然流量-曝光，访问人数
-            $.ajax({url: poiCompareDataUrl+'?_tm='+getNowTime(),type: 'POST',dataType: 'json',contentType: 'application/json',data:  JSON.stringify({"tOptionType":1,"pageDomain":{"currPage":0,"pageSize":1000,"totalNum":0},"sortOrder":"desc","sortKey":"viewUv"})}),
-            //订单核销getReceiptDetailUrl
-            $.get(getReceiptDetailUrl+'?_tm='+getNowTime()+'&request={"bizAcctId":21387461,"dealId":"0","poiId":"0","filter":"2","beginTime":"'+(startTime/1000)+'","endTime":"'+(endTime/1000)+'","offset":0,"limit":10000}'),
-        ).done(function(r4,r5){
+            $.ajax({url: poiCompareDataUrl+'?_tm='+getNowTime(),type: 'POST',dataType: 'json',contentType: 'application/json',data:  JSON.stringify({"tOptionType":1,"pageDomain":{"currPage":0,"pageSize":1000,"totalNum":0},"sortOrder":"desc","sortKey":"viewUv"})})
+        ).done(function(r4){
             //自然流量-曝光，访问人数
             succ('结束爬取-自然流量：曝光、访问人数')
             var totalNum=0
-            if(r4[0].data.pageDomain!=null){
-                totalNum=r4[0].data.pageDomain.totalNum
+
+            if(r4.data.pageDomain!=null){
+                totalNum=r4.data.pageDomain.totalNum
             }
 
-            if(r4[0].data.tPoiCompareDatas!=null){
-                $.each(r4[0].data.tPoiCompareDatas, function (pcn, pc) {
+            if(r4.data.tPoiCompareDatas!=null){
+                $.each(r4.data.tPoiCompareDatas, function (pcn, pc) {
                     var pcjson={};
                     pcjson.viewUv=pc.viewUv
                     pcjson.visitUv=pc.visitUv
@@ -180,45 +179,67 @@
                 })
             }
             console.log('自然流量：曝光、访问人数',flowMap)
-            succ('结束爬取-自然流量：订单核销，门店统计：代金券核销')
-            //订单核销
-            $.each(r5[0].data.details, function (vcn, vc) {
-                var poiId=vc.poiId+''
-                //自然流量-订单核销
-                var verifyCount=verifyCountMap.get(poiId)
-                if(verifyCount>0){
-                    verifyCount++;
-                }else{
-                    verifyCount=1
-                }
-                verifyCountMap.set(poiId,verifyCount)
-                //门店统计-代金券核销
-                var dealName=vc.dealName
-                if(dealName.indexOf("代金券")>-1){
-                    var shopCashCouponNum=shopCashCouponNumMap.get(poiId);
-                    if(shopCashCouponNum>0){
-                        shopCashCouponNum++;
-                    }else{
-                        shopCashCouponNum=1
-                    }
-                    shopCashCouponNumMap.set(poiId,shopCashCouponNum)
-                }
+            succ('开始爬取-自然流量：订单核销，门店统计：代金券核销')
+            getReceiptDetailData(0)
 
-            })
-            console.log('自然流量：订单核销',verifyCountMap)
-            console.log('门店统计：代金券核销',shopCashCouponNumMap)
-
-            //开始组装数据
-            //遍历需要抓取的店铺数据
-            succ('开始爬取-门店星级：星级评分、新增评价、新增中差评')
-            getMoreData(poiInfos[0])
         }).fail(function(obj,status,msg){
             console.log('obj',obj,'status',status,'msg',msg)
             warning(' 爬取失败-自然流量：曝光、访问人数，自然流量：订单核销，门店统计：代金券核销')
             succ('重置参数，重新爬取-自然流量：曝光、访问人数，自然流量：订单核销，门店统计：代金券核销')
-            verifyCountMap.clear()
-            shopCashCouponNumMap.clear()
             getBaseData()
+        })
+    }
+    function getReceiptDetailData(reqnum){
+        succ('爬取-自然流量：订单核销，门店统计：代金券核销。。。。'+reqnum)
+        $.when(
+            //订单核销getReceiptDetailUrl
+            $.get(getReceiptDetailUrl+'?_tm='+getNowTime()+'&request={"bizAcctId":21387461,"dealId":"0","poiId":"0","filter":"2","beginTime":"'+(startTime/1000)+'","endTime":"'+(endTime/1000)+'","offset":'+reqnum+',"limit":50}'),
+        ).done(function(r5){
+            var tmpreceiptDetail=r5.data.details
+            receiptDetail=receiptDetail.concat(tmpreceiptDetail)
+            if(tmpreceiptDetail.length==50){
+                getReceiptDetailData(reqnum+50)
+            }else{
+                succ('结束爬取-自然流量：订单核销，门店统计：代金券核销')
+                //订单核销
+                $.each(receiptDetail, function (vcn, vc) {
+                    console.log('vc',vc)
+                    var poiId=vc.poiId+''
+                    //自然流量-订单核销
+                    var verifyCount=verifyCountMap.get(poiId)
+                    if(verifyCount>0){
+                        verifyCount++;
+                    }else{
+                        verifyCount=1
+                    }
+                    verifyCountMap.set(poiId,verifyCount)
+                    //门店统计-代金券核销
+                    var dealName=vc.dealName
+
+                    if(dealName.indexOf("代金券")>-1){
+                        var shopCashCouponNum=shopCashCouponNumMap.get(poiId);
+                        if(shopCashCouponNum>0){
+                            shopCashCouponNum++;
+                        }else{
+                            shopCashCouponNum=1
+                        }
+                        shopCashCouponNumMap.set(poiId,shopCashCouponNum)
+                    }
+
+                })
+                console.log('自然流量：订单核销',verifyCountMap)
+                console.log('门店统计：代金券核销',shopCashCouponNumMap)
+
+                //开始组装数据
+                //遍历需要抓取的店铺数据
+                succ('开始爬取-门店星级：星级评分、新增评价、新增中差评')
+                getMoreData(poiInfos[0])
+            }
+        }).fail(function(obj,status,msg){
+            console.log('obj',obj,'status',status,'msg',msg)
+            warning(' 爬取失败-自然流量：订单核销，门店统计：代金券核销')
+            succ('重置参数，重新爬取-自然流量：订单核销，门店统计：代金券核销')
+            getReceiptDetailData(reqnum)
         })
     }
 
@@ -884,6 +905,7 @@
         poiName2IdMap.clear()
         shopId2PoiIdMap.clear()
         boardReportMap.clear()
+        tableReportDetail=[]
         tableReportDetail=[]
         //店铺对应计划
         launches=[]
