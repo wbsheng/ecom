@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      3.0.1
+// @version      3.0.2
 // @description  抓取数据!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -197,36 +197,41 @@
         ).done(function(r5){
             var tmpreceiptDetail=r5.data.details
             receiptDetail=receiptDetail.concat(tmpreceiptDetail)
-            if(tmpreceiptDetail.length==50){
+            if(tmpreceiptDetail!=null&&tmpreceiptDetail.length==50){
                 getReceiptDetailData(reqnum+50)
             }else{
                 succ('结束爬取-自然流量：订单核销，门店统计：代金券核销')
                 //订单核销
+
                 $.each(receiptDetail, function (vcn, vc) {
+
                     console.log('vc',vc)
-                    var poiId=vc.poiId+''
-                    //自然流量-订单核销
-                    var verifyCount=verifyCountMap.get(poiId)
-                    if(verifyCount>0){
-                        verifyCount++;
-                    }else{
-                        verifyCount=1
-                    }
-                    verifyCountMap.set(poiId,verifyCount)
-                    //门店统计-代金券核销
-                    var dealName=vc.dealName
-
-                    if(dealName.indexOf("代金券")>-1){
-                        var shopCashCouponNum=shopCashCouponNumMap.get(poiId);
-                        if(shopCashCouponNum>0){
-                            shopCashCouponNum++;
+                    if(vc!=null){
+                        var poiId=vc.poiId+''
+                        //自然流量-订单核销
+                        var verifyCount=verifyCountMap.get(poiId)
+                        if(verifyCount>0){
+                            verifyCount++;
                         }else{
-                            shopCashCouponNum=1
+                            verifyCount=1
                         }
-                        shopCashCouponNumMap.set(poiId,shopCashCouponNum)
-                    }
+                        verifyCountMap.set(poiId,verifyCount)
+                        //门店统计-代金券核销
+                        var dealName=vc.dealName
 
+                        if(dealName.indexOf("代金券")>-1){
+                            var shopCashCouponNum=shopCashCouponNumMap.get(poiId);
+                            if(shopCashCouponNum>0){
+                                shopCashCouponNum++;
+                            }else{
+                                shopCashCouponNum=1
+                            }
+                            shopCashCouponNumMap.set(poiId,shopCashCouponNum)
+                        }
+                    }
                 })
+
+
                 console.log('自然流量：订单核销',verifyCountMap)
                 console.log('门店统计：代金券核销',shopCashCouponNumMap)
 
