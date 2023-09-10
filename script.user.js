@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      3.0.2
-// @description  抓取数据!
+// @version      4.0.0
+// @description  抓取数据-20230910版本!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
 // @match        https://ecom.meituan.com/meishi
@@ -19,8 +19,13 @@
     'use strict';
     $(document.body).append(`<style type="text/css">.pickmeup{background:#000;border-radius:.4em;-moz-box-sizing:content-box;box-sizing:content-box;display:inline-block;position:absolute;touch-action:manipulation}.pickmeup *{-moz-box-sizing:border-box;box-sizing:border-box}.pickmeup.pmu-flat{position:relative}.pickmeup.pmu-hidden{display:none}.pickmeup .pmu-instance{display:inline-block;height:13.8em;padding:.5em;text-align:center;width:15em}.pickmeup .pmu-instance .pmu-button{color:#eee;cursor:pointer;outline:none;text-decoration:none}.pickmeup .pmu-instance .pmu-today{background:#17384d;color:#88c5eb}.pickmeup .pmu-instance .pmu-button:hover{background:transparent;color:#88c5eb}.pickmeup .pmu-instance .pmu-not-in-month{color:#666}.pickmeup .pmu-instance .pmu-disabled,.pickmeup .pmu-instance .pmu-disabled:hover{color:#333;cursor:default}.pickmeup .pmu-instance .pmu-selected{background:#136a9f;color:#eee}.pickmeup .pmu-instance .pmu-not-in-month.pmu-selected{background:#17384d}.pickmeup .pmu-instance nav{color:#eee;display:-ms-flexbox;display:-webkit-flex;display:flex;line-height:2em}.pickmeup .pmu-instance nav *:first-child :hover{color:#88c5eb}.pickmeup .pmu-instance nav .pmu-prev,.pickmeup .pmu-instance nav .pmu-next{display:none;height:2em;width:1em}.pickmeup .pmu-instance nav .pmu-month{width:14em}.pickmeup .pmu-instance .pmu-years *,.pickmeup .pmu-instance .pmu-months *{display:inline-block;line-height:3.6em;width:3.5em}.pickmeup .pmu-instance .pmu-day-of-week{color:#999;cursor:default}.pickmeup .pmu-instance .pmu-day-of-week *,.pickmeup .pmu-instance .pmu-days *{display:inline-block;line-height:1.5em;width:2em}.pickmeup .pmu-instance .pmu-day-of-week *{line-height:1.8em}.pickmeup .pmu-instance:first-child .pmu-prev,.pickmeup .pmu-instance:last-child .pmu-next{display:block}.pickmeup .pmu-instance:first-child .pmu-month,.pickmeup .pmu-instance:last-child .pmu-month{width:13em}.pickmeup .pmu-instance:first-child:last-child .pmu-month{width:12em}.pickmeup:not(.pmu-view-days) .pmu-days,.pickmeup:not(.pmu-view-days) .pmu-day-of-week,.pickmeup:not(.pmu-view-months) .pmu-months,.pickmeup:not(.pmu-view-years) .pmu-years{display:none}</style>`)
     $(document.body).append(`<style type="text/css">.ecom_button{position:fixed;z-index:9999;min-width:12rem;padding:1rem 1rem;border-radius:0.5rem;background:linear-gradient(to right bottom,#00ffb3,#00f2aa,#00e5a1,#00d998,#00cc8f);font-size:1.2rem;line-height:1.5;font-weight:500;}</style>`)
-    //var mainUrl='http://127.0.0.1:8081/';
     var mainUrl ='https://wanhao.haodata.xyz/api/'
+    //var mainUrl='http://127.0.0.1:8081/';
+    //20230910发现美团开店保更新为最新地址，程序更新
+    var getTableUrl='https://midas.dianping.com/shopdiy/report/datareport/cpm/getTable';
+    var getLaunchListUrl='https://midas.dianping.com/shopdiy/report/datareport/cpm/getLaunchList';
+    var getReceiptDetailUrl='https://ecom.meituan.com/activity/gw/rpc/couponQuery/ReceiptQueryBusinessService/getReceiptDetail';
+    var detailEntryUrl='https://biztonemeishi.meituan.com/api/nibmp/mva/gateway-proxy/mpmctentry/detailEntry';
     var getAccountUrl='https://ecom.meituan.com/meishi/gw/account/biz/getUserInfo';
     var getPoiUrl='https://ecom.meituan.com/meishi/gw/rpc/home/-/TEcomOperationDataService/getCityPoiIndex';
     var getPoiListByDealIdUrl='https://ecom.meituan.com/activity/gw/rpc/verifyHistory/ReceiptQueryBusinessService/getPoiListByDealId';
@@ -32,11 +37,6 @@
     var boardReportUrl='https://midas.dianping.com/shopdiy/report/datareport/pc/ajax/getBoardReport';
     var getTableReportUrl='https://midas.dianping.com/shopdiy/report/datareport/pc/ajax/getTableReport'
     var queryMenuListUrl='https://midas.dianping.com/shopdiy/common/ajax/queryMenuList';
-    var getTableUrl='https://midas.dianping.com/shopdiy/report/datareport/cpm/getTable';
-    var getLaunchListUrl='https://midas.dianping.com/shopdiy/report/datareport/cpm/getLaunchList';
-    var getReceiptDetailUrl='https://ecom.meituan.com/activity/gw/rpc/couponQuery/ReceiptQueryBusinessService/getReceiptDetail';
-    var detailEntryUrl='https://biztonemeishi.meituan.com/api/nibmp/mva/gateway-proxy/mpmctentry/detailEntry';
-
     Notiflix.Loading.Init({
         timeout:20000,
         clickToClose: false,
@@ -76,6 +76,16 @@
         endDate.setHours(endHour, endMinue, 0, 0);
         return nowDate.getTime() - beginDate.getTime() >= 0 && nowDate.getTime() <= endDate.getTime();
     }
+
+
+    function guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     function getNowTime(){
         return (new Date).getTime()
     }
@@ -92,14 +102,6 @@
     }
     function getEndTime(){
         return new Date(getYesterday()+' 23:59:59').getTime();
-    }
-
-    function guid() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
     }
 
     //开始时间，结束时间
