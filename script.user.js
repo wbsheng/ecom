@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      5.0.0
+// @version      5.0.1
 // @description  解放双手第一步!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -624,7 +624,7 @@
         $.when(
             //经营参谋-》业务分析
             $.ajax({url: tPagePoiCompareDataV3Url+'?_tm='+getNowTime(),type: 'POST',dataType: 'json',contentType: 'application/json',
-                    data:  JSON.stringify({"optionType":6,"page":{"currPage":0,"pageSize":50,"totalNum":0},"sortOrder":"desc","startTime":0,"endTime":0,"sortKey":"viewUv"})
+                    data:  JSON.stringify({"optionType":1,"page":{"currPage":0,"pageSize":50,"totalNum":0},"sortOrder":"desc","startTime":0,"endTime":0,"sortKey":"viewUv"})
                    })
         ).done(function(r){
             var cdata= r.data.tPoiCompareDatas
