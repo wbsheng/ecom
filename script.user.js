@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      5.0.1
+// @version      5.1.0
 // @description  解放双手第一步!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
@@ -406,8 +406,10 @@
                     warning('没有智选展位菜单')
                     //没有智选展位，智选其他的
                     //console.log('开始跑入口图点击率')
-                    succ('开始爬取-门店统计：入口图点击率')
-                    getDetailEntry(poiInfos[0].poiId)
+
+                    succ('开始爬取-客流分析：收藏人数、打卡人数')
+                    //console.log('开始爬取-客流分析：收藏人数、打卡人数')
+                    getBusinessAnalysisData()
                 }
             },
             onerror:function(obj,status,msg){
@@ -442,8 +444,10 @@
                         //有智选展位，没有店铺开通
                         warning('有智选展位，没有推广计划')
                         //console.log('有智选展位，没有推广计划')
-                        succ('开始爬取-门店统计：入口图点击率')
-                        getDetailEntry(poiInfos[0].poiId)
+                        succ('开始爬取-客流分析：收藏人数、打卡人数')
+                        //console.log('开始爬取-客流分析：收藏人数、打卡人数')
+                        getBusinessAnalysisData()
+
                     }else{
                         succ('成功获取-推广计划')
                         getTable(launches[0])
@@ -452,8 +456,10 @@
                     //有智选展位，没有店铺开通
                     warning('有智选展位，没有推广计划')
                     //console.log('有智选展位，没有推广计划')
-                    succ('开始爬取-门店统计：入口图点击率')
-                    getDetailEntry(poiInfos[0].poiId)
+                    succ('开始爬取-客流分析：收藏人数、打卡人数')
+                    //console.log('开始爬取-客流分析：收藏人数、打卡人数')
+                    getBusinessAnalysisData()
+
                 }
             },
             onerror:function(obj,status,msg){
@@ -637,8 +643,9 @@
                 td.visitorClockinginNum=tdata.clockInUserCnt
                 var poiId=poiName2IdMap.get(poiName.replace('（','(').replace('）',')'))
                 visitorMap.set(poiId,td)
+                console.log(poiName,poiId,td)
             })
-            //console.log('客流分析：收藏人数、打卡人数',visitorMap)
+            console.log('客流分析：收藏人数、打卡人数',visitorMap)
             succ('开始爬取-门店统计：入口图点击率')
             //console.log('开始爬取-门店统计：入口图点击率')
             getDetailEntry(poiInfos[0].poiId)
@@ -686,33 +693,36 @@
                 var data=$.parseJSON( xhr.responseText )
 
                 var tdata=data.msg.data
-                var size=tdata.length
-                console.log('获取推广计划明细数据',tdata,size)
-                for(var i=0;i<size;i++){
-                    var rd=tdata[i]
-                    var tDetail = {}
-                    tDetail.title=rd.launchName
-                    tDetail.poiId=poiName2PoiIdMap.get(rd.shopName)
-                    tDetail.cost=rd.T30001
-                    tDetail.viewUv=rd.T30002
-                    tDetail.clickNum=rd.T30003
-                    tDetail.clickAvgCost=rd.T30004
-                    tDetail.orderNum=rd.T30020
-                    tDetail.collectionNum=rd.T30012
-                    tDetail.interestedNum=rd.T30026
-                    tDetail.dt = rd.date
-                    tDetail.type = 1
-                    tDetail.sortNo=i
-                    tDetail.bData=xh
-                    tDetail.pcNo=pcNo
-                    tDetail.beforeData = xh
-                    tableReportDetail.push(tDetail)
-                }
-                if(xh==1){
-                    getTableReportData(0,bstartWeekDate,bendWeekDate)
-                }else{
-                    succ('开始抓取NCPM数据')
-                    weekHaveNcpm()
+                var size=0;
+                if(tdata!=null){
+                    size=tdata.length
+                    console.log('获取推广计划明细数据',tdata,size)
+                    for(var i=0;i<size;i++){
+                        var rd=tdata[i]
+                        var tDetail = {}
+                        tDetail.title=rd.launchName
+                        tDetail.poiId=poiName2PoiIdMap.get(rd.shopName)
+                        tDetail.cost=rd.T30001
+                        tDetail.viewUv=rd.T30002
+                        tDetail.clickNum=rd.T30003
+                        tDetail.clickAvgCost=rd.T30004
+                        tDetail.orderNum=rd.T30020
+                        tDetail.collectionNum=rd.T30012
+                        tDetail.interestedNum=rd.T30026
+                        tDetail.dt = rd.date
+                        tDetail.type = 1
+                        tDetail.sortNo=i
+                        tDetail.bData=xh
+                        tDetail.pcNo=pcNo
+                        tDetail.beforeData = xh
+                        tableReportDetail.push(tDetail)
+                    }
+                    if(xh==1){
+                        getTableReportData(0,bstartWeekDate,bendWeekDate)
+                    }else{
+                        succ('开始抓取NCPM数据')
+                        weekHaveNcpm()
+                    }
                 }
             },
             onerror:function(obj,status,msg){
