@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.haodata.xyz
-// @version      5.1.0
-// @description  解放双手第一步!
+// @version      6.0.0
+// @description  适配周报接口升级，新增参数优化!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
 // @match        https://ecom.meituan.com/meishi
@@ -77,10 +77,10 @@
         return nowDate.getTime() - beginDate.getTime() >= 0 && nowDate.getTime() <= endDate.getTime();
     }
     function getNowTime(){
-        return (new Date).getTime()
+        return (new Date()).getTime()
     }
     function getYesterday(){
-        var time=(new Date).getTime()-24*60*60*1000;
+        var time=(new Date()).getTime()-24*60*60*1000;
         var yesterday=new Date(time);
         var month=yesterday.getMonth();
         var day=yesterday.getDate();
@@ -92,6 +92,25 @@
     }
     function getEndTime(){
         return new Date(getYesterday()+' 23:59:59').getTime();
+    }
+
+    function getCompareBeginDate(tmpStartDate,tmpEndDate){
+        var cd=parseInt(tmpEndDate.replaceAll('-',''))-parseInt(tmpStartDate.replaceAll('-',''))+1;
+        var time=(new Date(tmpStartDate)).getTime()-cd*24*60*60*1000;
+        var yesterday=new Date(time);
+        var month=yesterday.getMonth();
+        var day=yesterday.getDate();
+        yesterday=yesterday.getFullYear() + "-" + (yesterday.getMonth()> 9 ? (yesterday.getMonth() + 1) : "0" + (yesterday.getMonth() + 1)) + "-" +(yesterday.getDate()> 9 ? (yesterday.getDate()) : "0" + (yesterday.getDate()));
+        return yesterday
+    }
+
+    function getCompareEndDate(tmpStartDate){
+        var time=(new Date(tmpStartDate)).getTime()-24*60*60*1000;
+        var yesterday=new Date(time);
+        var month=yesterday.getMonth();
+        var day=yesterday.getDate();
+        yesterday=yesterday.getFullYear() + "-" + (yesterday.getMonth()> 9 ? (yesterday.getMonth() + 1) : "0" + (yesterday.getMonth() + 1)) + "-" +(yesterday.getDate()> 9 ? (yesterday.getDate()) : "0" + (yesterday.getDate()));
+        return yesterday
     }
 
     function guid() {
@@ -487,9 +506,7 @@
                 var ncpm={}
 
                 titleData.forEach((item,index,array)=>{
-                    if(item=='花费（元）'){
-                        ncpm.ncpmCost=parseFloat(tableData[index])
-                    }else if(item=='曝光（次）'){
+                    if(item=='曝光（次）'){
                         ncpm.ncpmViewUv=parseFloat(tableData[index].replace(',',''))
                     }else if(item=='点击（次）'){
                         ncpm.ncpmClickNum=parseFloat(tableData[index])
@@ -497,24 +514,13 @@
                         ncpm.ncpmClickAvgCost=parseFloat(tableData[index])
                     }else if(item=='团购订单量（次）'){
                         ncpm.ncpmOrderNum=parseFloat(tableData[index])
+                    }else if(item=='花费（元）'){
+                        ncpm.ncpmCost=parseFloat(tableData[index])
                     }
                 })
                 var ncpmDetail = {}
 
                 var poiId = shopId2PoiIdMap.get(shopid)
-                //                 ncpmDetail.title=ld.title
-                //                 ncpmDetail.poiId=poiId
-                //                 ncpmDetail.cost=ncpm.ncpmCost
-                //                 ncpmDetail.viewUv=ncpm.ncpmViewUv
-                //                 ncpmDetail.clickNum=ncpm.ncpmClickNum
-                //                 ncpmDetail.clickAvgCost=ncpm.ncpmClickAvgCost
-                //                 ncpmDetail.orderNum=0
-                //                 ncpmDetail.collectionNum=0
-                //                 ncpmDetail.interestedNum=0
-                //                 ncpmDetail.type = 2
-                //                 //console.log('ncpmDetail明细',ncpmDetail)
-                //                 ncpmMapDetail.push(ncpmDetail)
-                // var nctmp=ncpmMap.get(shopid)
                 var nctmp=ncpmMap.get(poiId)
                 if(nctmp!=null){
                     ncpm.ncpmCost+=nctmp.ncpmCost
@@ -570,30 +576,30 @@
                         var ncpm= ncpmMap.get(rt.poiId)
                         if(ncpm!=null){
                             //console.log(rt.poiId,ncpm)
-                            rt.ncpmCost=ncpm.ncpmCost
-                            rt.ncpmViewUv=ncpm.ncpmViewUv
                             rt.ncpmClickNum=ncpm.ncpmClickNum
                             rt.ncpmOrderNum=ncpm.ncpmOrderNum
                             rt.ncpmClickAvgCost=ncpm.ncpmClickAvgCost
+                            rt.ncpmCost=ncpm.ncpmCost
+                            rt.ncpmViewUv=ncpm.ncpmViewUv
                         }else{
                             rt.ncpmCost=0
-                            rt.ncpmViewUv=0
-                            rt.ncpmClickNum=0
                             rt.ncpmClickAvgCost=0
                             rt.ncpmOrderNum=0
+                            rt.ncpmViewUv=0
+                            rt.ncpmClickNum=0
                         }
                         var boardReport= boardReportMap.get(rt.poiId)
                         if(boardReport!=null){
-                            rt.extensionCost=boardReport.extensionCost
-                            rt.extensionViewUv=boardReport.extensionViewUv
                             rt.extensionClickAvgCost=boardReport.extensionClickAvgCost
                             rt.extensionOrderNum=boardReport.extensionOrderNum
                             rt.extensionCollectionNum=boardReport.extensionCollectionNum
+                            rt.extensionCost=boardReport.extensionCost
+                            rt.extensionViewUv=boardReport.extensionViewUv
                         }else{
                             rt.extensionCost=0
-                            rt.extensionViewUv=0
                             rt.extensionClickAvgCost=0
                             rt.extensionOrderNum=0
+                            rt.extensionViewUv=0
                             rt.extensionCollectionNum=0
                         }
                         var shopPhoto = shopPhotoClickMap.get(rt.poiId)
@@ -687,7 +693,7 @@
     //获取推广计划明细数据
     function getTableReportData(xh,st,et){
         GM_xmlhttpRequest({
-            url:getTableReportUrl+'?groupUnit=launchId&tabIds=T30001%2CT30002%2CT30003%2CT30004%2CT30012%2CT30026%2CT30020&shopIds=0&launchIds=0&objectUnit=account&timeUnit=day&beginDate='+st+'&endDate='+et+'&platform=0',
+            url:getTableReportUrl+'?groupUnit=launchId&tabIds=T30001%2CT30002%2CT30003%2CT30004%2CT30012%2CT30026%2CT30020&shopIds=0&launchIds=0&objectUnit=launch&platform=0&beginDate='+st+'&endDate='+et+'&timeUnit=day&compareEnabled=false&compareBeginDate='+getCompareBeginDate(st,et)+'&compareEndDate='+getCompareEndDate(st)+'&orderType=&orderField=&yodaReady=h5&csecplatform=4&csecversion=2.3.1',
             method :"get",
             onload:function(xhr){
                 var data=$.parseJSON( xhr.responseText )
@@ -703,12 +709,12 @@
                         tDetail.title=rd.launchName
                         tDetail.poiId=poiName2PoiIdMap.get(rd.shopName)
                         tDetail.cost=rd.T30001
-                        tDetail.viewUv=rd.T30002
-                        tDetail.clickNum=rd.T30003
-                        tDetail.clickAvgCost=rd.T30004
                         tDetail.orderNum=rd.T30020
                         tDetail.collectionNum=rd.T30012
                         tDetail.interestedNum=rd.T30026
+                        tDetail.viewUv=rd.T30002
+                        tDetail.clickAvgCost=rd.T30004
+                        tDetail.clickNum=rd.T30003
                         tDetail.dt = rd.date
                         tDetail.type = 1
                         tDetail.sortNo=i
@@ -749,20 +755,15 @@
                 })
                 if(havaMenu){
                     succ('拥有智选展位菜单')
-                    ////console.log('拥有智选展位菜单')
                     succ('获取推广计划')
                     weekGetLaunches()
                 }else{
-                    ////console.log('没有智选展位菜单')
                     warning('没有智选展位菜单')
-                    //没有智选展位，智选其他的
-                    ////console.log('开始整合数据')
                     succ('开始整合数据')
                     saveWeekReportData()
                 }
             },
             onerror:function(obj,status,msg){
-                ////console.log('obj',obj,'status',status,'msg',msg)
                 warning('判断是否有智选展位失败')
                 succ('重新爬取判断是否有智选展位')
                 weekHaveNcpm()
@@ -793,24 +794,20 @@
                     if(weeklaunches.length<1){
                         //有智选展位，没有店铺开通
                         warning('有智选展位，没有推广计划')
-                        ////console.log('有智选展位，没有推广计划')
                         succ('开始整合数据')
                         saveWeekReportData()
                     }else{
                         succ('成功获取-推广计划')
-                        ////console.log('推广计划数据',weeklaunches)
                         weekgetBoardReportShopId()
                     }
                 }else{
                     //有智选展位，没有店铺开通
                     warning('有智选展位，没有推广计划')
-                    ////console.log('有智选展位，没有推广计划')
                     succ('开始整合数据')
                     saveWeekReportData()
                 }
             },
             onerror:function(obj,status,msg){
-                ////console.log('obj',obj,'status',status,'msg',msg)
                 warning('获取推广计划失败')
                 succ('重新获取推广计划')
                 weekGetLaunches()
@@ -826,18 +823,14 @@
             method :"get",
             onload:function(xhr){
                 var data=$.parseJSON( xhr.responseText )
-                ////console.log('getBoardReportShopId',data)
                 $.each(data.msg.shopList, function (shopn, shop) {
                     weekshopId2PoiIdMap.set(shop.shopId,poiName2PoiIdMap.get(shop.shopName))
                 })
-                ////console.log('结束爬取-门店对应shopId数据weekshopId2PoiIdMap',weekshopId2PoiIdMap)
                 succ('结束爬取-门店对应shopId数据')
                 succ('开始爬取-NCPM数据')
-                // console.log('所有推广数据',weeklaunches)
                 weekGetTable(weeklaunches[0],1,startWeekDate,endWeekDate)
             },
             onerror:function(obj,status,msg){
-                ////console.log('obj',obj,'status',status,'msg',msg)
                 weekgetBoardReportShopId()
             }
         })
@@ -848,7 +841,7 @@
         var shopid=ld.shopId+''
 
         GM_xmlhttpRequest({
-            url:getTableUrl+'?brandId=0&planId=0&originalMaterialId=0&launchId='+ld.launchId+'&beginDate='+st+'&endDate='+et+'&tabIds=T1001%2CT1002%2CT1003%2CT1004%2CT1006%2CT1005%2CT1010%2CT1022%2CT1009&groupByDimension=1&period=',
+            url:getTableUrl+'?brandId=0&planId=0&beginDate='+st+'&endDate='+et+'&groupByDimension=1&period=1&timeUnit=day&tabIds=T1001%2CT1002%2CT1003%2CT1004%2CT1006%2CT1005%2CT1010%2CT1022%2CT1009&launchAimCodes=1%2C5&originalMaterialIds=0&launchIds='+ld.launchId+'&yodaReady=h5&csecplatform=4&csecversion=2.3.1',
             method :"get",
             onload:function(xhr){
                 var data=$.parseJSON( xhr.responseText )
@@ -857,6 +850,7 @@
                 var tableData=data.msg.total
                 var titleData=data.msg.title
                 var mxData=data.msg.data
+                //console.log(mxData)
                 for (var i=0;i<mxData.length;i++){
                     var ncpm= mxData[i]
                     var ncpmDetail = {}
@@ -865,7 +859,14 @@
                     ncpmDetail.poiId=poiId
 
                     titleData.forEach((item,index,array)=>{
-                        if(item=='花费（元）'){
+                        // console.log(item,)
+                        if(item=='日期'){
+                            ncpmDetail.dt=ncpm[index]
+                        }else if(item=='感兴趣（次）'){
+                            ncpmDetail.interestedNum=ncpm[index]
+                        }else if(item=='收藏（次）'){
+                            ncpmDetail.collectionNum=ncpm[index]
+                        }else if(item=='花费（元）'){
                             ncpmDetail.cost=ncpm[index]
                         }else if(item=='曝光（次）'){
                             ncpmDetail.viewUv=ncpm[index]
@@ -876,14 +877,6 @@
                         }else if(item=='团购订单量（次）'){
                             ncpmDetail.orderNum=ncpm[index]
                         }
-                        else if(item=='感兴趣（次）'){
-                            ncpmDetail.interestedNum=ncpm[index]
-                        }
-                        else if(item=='收藏（次）'){
-                            ncpmDetail.collectionNum=ncpm[index]
-                        }else if(item=='时段'){
-                            ncpmDetail.dt=ncpm[index]
-                        }
                     })
 
 
@@ -891,7 +884,7 @@
                     ncpmDetail.sortNo=i
                     ncpmDetail.pcNo=pcNo
                     ncpmDetail.beforeData = xh
-                    ///console.log('ncpmDetail明细',ncpmDetail)
+                    console.log('ncpmDetail明细',ncpmDetail)
                     if(ncpmDetail.cost>0){
                         ncpmMapDetail.push(ncpmDetail)
                     }
@@ -924,7 +917,7 @@
     function saveWeekReportData(){
         ////console.log('ncpmMapDetail',ncpmMapDetail)
         ////console.log('tableReportDetail',tableReportDetail)
-        //console.log('json',JSON.stringify({'ncpmList':ncpmMapDetail,'extensionList':tableReportDetail}))
+        // console.log('json',JSON.stringify({'ncpmList':ncpmMapDetail,'extensionList':tableReportDetail}))
         GM_xmlhttpRequest({
             url:mainUrl+'ecome/week/reports',
             method :"post",
@@ -934,14 +927,12 @@
             },
             onload:function(xhr){
                 var data=$.parseJSON( xhr.responseText )
-                ////console.log('保存结束',xhr.responseText)
                 succ('开始导出周报')
                 window.location.href=mainUrl+'ecome/export/week/'+weekAccount+'/'+startWeekDate.replaceAll('-','')+'/'+endWeekDate.replaceAll('-','')+'/'+pcNo
                 cloaseLoading()
                 succ('结束导出周报')
             },
             onerror:function(obj,status,msg){
-                ////console.log('obj',obj,'status',status,'msg',msg)
                 warning('保存数据失败')
                 succ('重新保存数据')
                 saveWeekReportData()
