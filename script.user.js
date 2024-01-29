@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         美团开店宝
-// @namespace    https://wanhao.haodata.xyz
-// @version      6.0.0
-// @description  适配周报接口升级，新增参数优化!
+// @namespace    https://wanhao.zhu-lang.com
+// @version      6.0.1
+// @description  更新服务地址为https://wanhao.zhu-lang.com/api/!
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
 // @match        https://ecom.meituan.com/meishi
@@ -14,13 +14,15 @@
 // @require      https://unpkg.com/notiflix@2.7.0/dist/notiflix-aio-2.7.0.min.js
 // @require      https://cdn.staticfile.org/PickMeUp/3.2.1/pickmeup.min.js
 // @run-at       document-body
+// @downloadURL https://update.greasyfork.org/scripts/446077/%E7%BE%8E%E5%9B%A2%E5%BC%80%E5%BA%97%E5%AE%9D.user.js
+// @updateURL https://update.greasyfork.org/scripts/446077/%E7%BE%8E%E5%9B%A2%E5%BC%80%E5%BA%97%E5%AE%9D.meta.js
 // ==/UserScript==
 (function() {
     'use strict';
     $(document.body).append(`<style type="text/css">.pickmeup{background:#000;border-radius:.4em;-moz-box-sizing:content-box;box-sizing:content-box;display:inline-block;position:absolute;touch-action:manipulation}.pickmeup *{-moz-box-sizing:border-box;box-sizing:border-box}.pickmeup.pmu-flat{position:relative}.pickmeup.pmu-hidden{display:none}.pickmeup .pmu-instance{display:inline-block;height:13.8em;padding:.5em;text-align:center;width:15em}.pickmeup .pmu-instance .pmu-button{color:#eee;cursor:pointer;outline:none;text-decoration:none}.pickmeup .pmu-instance .pmu-today{background:#17384d;color:#88c5eb}.pickmeup .pmu-instance .pmu-button:hover{background:transparent;color:#88c5eb}.pickmeup .pmu-instance .pmu-not-in-month{color:#666}.pickmeup .pmu-instance .pmu-disabled,.pickmeup .pmu-instance .pmu-disabled:hover{color:#333;cursor:default}.pickmeup .pmu-instance .pmu-selected{background:#136a9f;color:#eee}.pickmeup .pmu-instance .pmu-not-in-month.pmu-selected{background:#17384d}.pickmeup .pmu-instance nav{color:#eee;display:-ms-flexbox;display:-webkit-flex;display:flex;line-height:2em}.pickmeup .pmu-instance nav *:first-child :hover{color:#88c5eb}.pickmeup .pmu-instance nav .pmu-prev,.pickmeup .pmu-instance nav .pmu-next{display:none;height:2em;width:1em}.pickmeup .pmu-instance nav .pmu-month{width:14em}.pickmeup .pmu-instance .pmu-years *,.pickmeup .pmu-instance .pmu-months *{display:inline-block;line-height:3.6em;width:3.5em}.pickmeup .pmu-instance .pmu-day-of-week{color:#999;cursor:default}.pickmeup .pmu-instance .pmu-day-of-week *,.pickmeup .pmu-instance .pmu-days *{display:inline-block;line-height:1.5em;width:2em}.pickmeup .pmu-instance .pmu-day-of-week *{line-height:1.8em}.pickmeup .pmu-instance:first-child .pmu-prev,.pickmeup .pmu-instance:last-child .pmu-next{display:block}.pickmeup .pmu-instance:first-child .pmu-month,.pickmeup .pmu-instance:last-child .pmu-month{width:13em}.pickmeup .pmu-instance:first-child:last-child .pmu-month{width:12em}.pickmeup:not(.pmu-view-days) .pmu-days,.pickmeup:not(.pmu-view-days) .pmu-day-of-week,.pickmeup:not(.pmu-view-months) .pmu-months,.pickmeup:not(.pmu-view-years) .pmu-years{display:none}</style>`)
     $(document.body).append(`<style type="text/css">.ecom_button{position:fixed;z-index:9999;min-width:12rem;padding:1rem 1rem;border-radius:0.5rem;background:linear-gradient(to right bottom,#00ffb3,#00f2aa,#00e5a1,#00d998,#00cc8f);font-size:1.2rem;line-height:1.5;font-weight:500;}</style>`)
     //var mainUrl='http://127.0.0.1:8082/';
-    var mainUrl ='https://wanhao.haodata.xyz/api/'
+    var mainUrl ='https://wanhao.zhu-lang.com/api/'
     var getAccountUrl='https://ecom.meituan.com/meishi/gw/account/biz/getUserInfo';
     var getPoiUrl='https://ecom.meituan.com/meishi/gw/rpc/home/-/TEcomOperationDataService/getCityPoiIndex';
     var getPoiListByDealIdUrl='https://ecom.meituan.com/activity/gw/rpc/verifyHistory/ReceiptQueryBusinessService/getPoiListByDealId';
