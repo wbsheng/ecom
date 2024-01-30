@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.zhu-lang.com
-// @version      6.0.2
-// @description  更新服务地址为https://wanhao.zhu-lang.com/api/!
+// @version      6.0.3
+// @description  更新服务地址为https://wanhao.zhu-lang.com
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
 // @match        https://ecom.meituan.com/meishi
@@ -1074,7 +1074,7 @@
                 onload:function(xhr){
                     //console.log('上传店铺数据',xhr.responseText)
                     cloaseLoading()
-                    Notiflix.Confirm.Show( '提示',poiInfoss.length+'条店铺数据已经成功上传,是否登入好数据分析平台标记是否生成日报?', '确认', '暂不',function(){window.open('https://wanhao.haodata.xyz',"_blank","")}, function(){  } )
+                    Notiflix.Confirm.Show( '提示',poiInfoss.length+'条店铺数据已经成功上传,是否登入好数据分析平台标记是否生成日报?', '确认', '暂不',function(){window.open('https://wanhao.zhu-lang.com',"_blank","")}, function(){  } )
                 }
             })
         })
