@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         美团开店宝
 // @namespace    https://wanhao.zhu-lang.com
-// @version      6.0.4
-// @description  导出异常修复20240411
+// @version      6.0.5
+// @description  导出异常修复20240722
 // @author       wbsheng
 // @match        https://ecom.meituan.com/meishi/
 // @match        https://ecom.meituan.com/meishi
@@ -24,6 +24,7 @@
     //var mainUrl='http://127.0.0.1:8082/';
     var mainUrl ='https://wanhao.zhu-lang.com/api/'
     var getUserInfoUrl='https://ecom.meituan.com/meishi/gw/account/biz/getUserInfo';
+    var tPagePoiCompareDataV3Url='https://ecom.meituan.com/emis/gw/TEcomBusinessAnalysisService/getTPagePoiCompareDataV3'
     var getCityPoiIndexUrl='https://ecom.meituan.com/meishi/gw/rpc/home/-/TEcomOperationDataService/getCityPoiIndex';
     var getPoiListByDealIdUrl='https://ecom.meituan.com/activity/gw/rpc/verifyHistory/ReceiptQueryBusinessService/getPoiListByDealId';
     var poiCompareDataUrl='https://ecom.meituan.com/emis/gw/rpc/TEcomBusinessAnalysisService/getTPagePoiCompareData';
@@ -38,7 +39,7 @@
     var getLaunchDataListUrl='https://midas.dianping.com/shopdiy/report/datareport/cpm/getLaunchList';
     var getReceiptDetailUrl='https://ecom.meituan.com/activity/gw/rpc/couponQuery/ReceiptQueryBusinessService/getReceiptDetail';
     var detailEntryUrl='https://biztonemeishi.meituan.com/api/nibmp/mva/gateway-proxy/mpmctentry/detailEntry';
-    var tPagePoiCompareDataV3Url='https://ecom.meituan.com/emis/gw/TEcomBusinessAnalysisService/getTPagePoiCompareDataV3'
+    
     Notiflix.Loading.Init({
         timeout:20000,
         clickToClose: false,
@@ -123,9 +124,7 @@
         });
     }
 
-    //开始时间，结束时间
-    var startTime=getStartTime();
-    var endTime=getEndTime();
+   
     //账号信息
     var accountInfo={};
     //店铺信息
@@ -142,6 +141,10 @@
     var shopCashCouponNumMap=new Map()
     //最后结果
     var result=[];
+
+     //开始时间，结束时间
+    var startTime=getStartTime();
+    var endTime=getEndTime();
 
     //推广数据
     var boardReportCount=0
@@ -222,9 +225,9 @@
             if(tmpreceiptDetail!=null&&tmpreceiptDetail.length==50){
                 getReceiptDetailData(reqnum+50)
             }else{
-                succ('结束爬取-自然流量：订单核销，门店统计：代金券核销')
+              
                 //订单核销
-
+                succ('结束爬取-自然流量：订单核销，门店统计：代金券核销')
                 $.each(receiptDetail, function (vcn, vc) {
 
                     //console.log('vc',vc)
@@ -275,6 +278,7 @@
         var pid=r.poiId
         //自然流量曝光、访问
         var m=flowMap.get(r.poiName)
+
         if(m!=null){
             r.visitUv=m.visitUv
             r.viewUv=m.viewUv
@@ -379,7 +383,10 @@
                             r.extensionCollectionNum=boardvalue
                         }
                     })
-                    boardReportMap.set(poiId,r)
+                    console.log(shopId,poiId,r)
+                    if(shopId!==undefined){
+                       boardReportMap.set(poiId,r)
+                    }
                 }
 
                 boardReportCount++
@@ -387,7 +394,7 @@
                     boardReport(poiInfos[boardReportCount])
                 }else{
                     succ('结束爬取-推广数据：花费、曝光、点击均价、团购订单量、收藏')
-                    //console.log('推广数据：花费、曝光、点击均价、团购订单量、收藏',boardReportMap)
+                    console.log('推广数据：花费、曝光、点击均价、团购订单量、收藏',boardReportMap)
 
                     //要调用其他疑难数据咯
                     //智选展位数据
@@ -419,7 +426,7 @@
                 })
                 if(havaMenu){
                     succ('拥有智选展位菜单')
-                    //console.log('拥有智选展位菜单')
+                    console.log('拥有智选展位菜单')
                     succ('获取推广计划')
                     getLaunches()
                 }else{
@@ -563,6 +570,7 @@
             method :"get",
             onload:function(xhr){
                 var data=$.parseJSON( xhr.responseText )
+
                 if(data.msg!='无功能权限!'){
                     //console.log('开始爬取：'+pid+'-门店统计：入口图点击率')
                     shopPhotoClickMap.set(pid, data.data.clickRate)
